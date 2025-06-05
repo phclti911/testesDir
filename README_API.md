@@ -1,3 +1,29 @@
+# Como rodar o projeto
+
+Você pode rodar o backend de duas formas:
+
+**Usando Docker (recomendado):**
+
+```
+docker compose up -d
+```
+
+ou para subir novamente se já estiver parado:
+
+```
+docker compose start
+```
+
+**Rodando localmente (apenas PHP, sem Docker):**
+
+```
+php -S localhost:8000 -t public
+```
+
+Acesse em: http://localhost:8000 ou http://localhost:8123 (se usar Docker)
+
+---
+
 # Documentação do Projeto Backend PHP MVC - AVP2
 
 ## Visão Geral
