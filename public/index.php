@@ -11,8 +11,8 @@ if ($method === 'POST') {
         exit;
     }
     if (preg_match('#^/pessoas$#', $requestUri)) {
-        require_once '../app/Controllers/CandidatoController.php';
-        $controller = new CandidatoController();
+        require_once '../app/Controllers/PessoaController.php';
+        $controller = new PessoaController();
         $controller->create();
         exit;
     }
