@@ -6,14 +6,13 @@ class CandidatoController {
         $input = file_get_contents('php://input');
         $data = json_decode($input, true);
         if ($data === null) {
-            http_response_code(400); // JSON inválido
+            http_response_code(400);
             return;
         }
-        // Validação dos campos obrigatórios (id agora opcional)
         $camposObrigatorios = ['nome', 'profissao', 'localizacao', 'nivel'];
         foreach ($camposObrigatorios as $campo) {
             if (empty($data[$campo])) {
-                http_response_code(422); // Unprocessable Entity
+                http_response_code(422);
                 return;
             }
         }
@@ -26,7 +25,6 @@ class CandidatoController {
             http_response_code(422);
             return;
         }
-        // Gera UUID se não vier id
         $id = !empty($data['id']) ? $data['id'] : $this->generateUUID();
         $dbConfig = require '../config/database.php';
         $mysqli = new mysqli($dbConfig['host'], $dbConfig['user'], $dbConfig['pass'], $dbConfig['dbname'], $dbConfig['port']);
