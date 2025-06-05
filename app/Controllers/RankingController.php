@@ -1,17 +1,16 @@
 <?php
 require_once __DIR__ . '/../Models/RankingModel.php';
+require_once __DIR__ . '/../Views/JsonView.php';
 class RankingController {
     public function rankingPorVaga($idVaga) {
         $rankingModel = new RankingModel();
         if (!$rankingModel->existeCandidaturaParaVaga($idVaga)) {
-            http_response_code(404);
+            JsonView::render([], 404);
             $rankingModel->fechar();
             return;
         }
         $candidatos = $rankingModel->rankingPorVaga($idVaga);
-        http_response_code(200);
-        header('Content-Type: application/json');
-        echo json_encode($candidatos);
+        JsonView::render($candidatos, 200);
         $rankingModel->fechar();
     }
 }

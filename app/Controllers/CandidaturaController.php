@@ -1,17 +1,18 @@
 <?php
 require_once '../config/database.php';
 require_once __DIR__ . '/../Models/CandidaturaModel.php';
+require_once __DIR__ . '/../Views/JsonView.php';
 class CandidaturaController {
     public function create() {
         if (ob_get_level()) ob_clean();
         $input = file_get_contents('php://input');
         $data = json_decode($input, true);
         if ($data === null) {
-            http_response_code(400);
+            JsonView::render([], 400);
             return;
         }
         if (empty($data['id_vaga']) || empty($data['id_pessoa'])) {
-            http_response_code(400);
+            JsonView::render([], 400);
             return;
         }
         $id = !empty($data['id']) ? $data['id'] : $this->generateUUID();
@@ -19,34 +20,32 @@ class CandidaturaController {
         $id_pessoa = $data['id_pessoa'];
         $candidaturaModel = new CandidaturaModel();
         if ($candidaturaModel->existeId($id)) {
-            http_response_code(400);
+            JsonView::render([], 400);
             $candidaturaModel->fechar();
             return;
         }
         if ($candidaturaModel->existeDuplicidade($id_vaga, $id_pessoa)) {
-            http_response_code(400);
+            JsonView::render([], 400);
             $candidaturaModel->fechar();
             return;
         }
         $vaga = $candidaturaModel->buscarVaga($id_vaga);
         $pessoa = $candidaturaModel->buscarPessoa($id_pessoa);
         if (!$vaga || !$pessoa) {
-            http_response_code(404);
+            JsonView::render([], 404);
             $candidaturaModel->fechar();
             return;
         }
         $score = $this->calcularScore($vaga['nivel'], $pessoa['nivel'], $vaga['localizacao'], $pessoa['localizacao']);
         $res = $candidaturaModel->inserir($id, $id_vaga, $id_pessoa, $score);
         if ($res) {
-            http_response_code(201);
-            header('Content-Type: application/json');
-            echo json_encode([
+            JsonView::render([
                 'mensagem' => 'Candidatura cadastrada com sucesso. Consulte o banco para validar o registro.',
                 'id' => $id,
                 'score' => $score
-            ]);
+            ], 201);
         } else {
-            http_response_code(422);
+            JsonView::render([], 422);
         }
         $candidaturaModel->fechar();
     }
