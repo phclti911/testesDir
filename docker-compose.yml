@@ -1,0 +1,30 @@
+version: "3.8"
+services:
+  web:
+    build: .
+    ports:
+      - "8123:80"
+    volumes:
+      - ./public:/var/www/html
+      - ./app:/var/www/app
+      - ./config:/var/www/config
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=172.17.0.1
+      - DB_NAME=avp2_teste1
+      - DB_USER=root
+      - DB_PASS=root
+      - DB_PORT=3307
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: avp2_teste1
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+volumes:
+  db_data:

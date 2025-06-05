@@ -1,0 +1,4 @@
+RewriteEngine On
+RewriteCond %{REQUEST_METHOD} ^(POST|GET)$
+RewriteCond %{REQUEST_URI} !^/index.php
+RewriteRule ^(.*)$ /index.php [L]
