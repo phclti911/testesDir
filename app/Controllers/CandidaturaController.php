@@ -1,5 +1,6 @@
 <?php
 require_once '../config/database.php';
+require_once __DIR__ . '/../Models/CandidaturaModel.php';
 class CandidaturaController {
     public function create() {
         if (ob_get_level()) ob_clean();
@@ -13,53 +14,30 @@ class CandidaturaController {
             http_response_code(400);
             return;
         }
-        // Gera UUID se não vier id
         $id = !empty($data['id']) ? $data['id'] : $this->generateUUID();
         $id_vaga = $data['id_vaga'];
         $id_pessoa = $data['id_pessoa'];
-        $dbConfig = require '../config/database.php';
-        $mysqli = new mysqli($dbConfig['host'], $dbConfig['user'], $dbConfig['pass'], $dbConfig['dbname'], $dbConfig['port']);
-        if ($mysqli->connect_errno) {
-            http_response_code(500);
-            return;
-        }
-        // Verificar unicidade do id da candidatura
-        $check = $mysqli->prepare('SELECT id FROM candidaturas WHERE id = ?');
-        $check->bind_param('s', $id);
-        $check->execute();
-        $check->store_result();
-        if ($check->num_rows > 0) {
+        $candidaturaModel = new CandidaturaModel();
+        if ($candidaturaModel->existeId($id)) {
             http_response_code(400);
-            $check->close();
-            $mysqli->close();
+            $candidaturaModel->fechar();
             return;
         }
-        $check->close();
-        // Verificar duplicidade de candidatura (mesmo id_vaga e id_pessoa)
-        $check2 = $mysqli->prepare('SELECT id FROM candidaturas WHERE id_vaga = ? AND id_pessoa = ?');
-        $check2->bind_param('ss', $id_vaga, $id_pessoa);
-        $check2->execute();
-        $check2->store_result();
-        if ($check2->num_rows > 0) {
+        if ($candidaturaModel->existeDuplicidade($id_vaga, $id_pessoa)) {
             http_response_code(400);
-            $check2->close();
-            $mysqli->close();
+            $candidaturaModel->fechar();
             return;
         }
-        $check2->close();
-        // Buscar nivel e localizacao da vaga
-        $vaga = $mysqli->query("SELECT nivel, localizacao FROM vagas WHERE id = '".$mysqli->real_escape_string($id_vaga)."'")->fetch_assoc();
-        // Buscar nivel e localizacao do candidato
-        $pessoa = $mysqli->query("SELECT nivel, localizacao FROM pessoa WHERE id = '".$mysqli->real_escape_string($id_pessoa)."'")->fetch_assoc();
+        $vaga = $candidaturaModel->buscarVaga($id_vaga);
+        $pessoa = $candidaturaModel->buscarPessoa($id_pessoa);
         if (!$vaga || !$pessoa) {
             http_response_code(404);
-            $mysqli->close();
+            $candidaturaModel->fechar();
             return;
         }
         $score = $this->calcularScore($vaga['nivel'], $pessoa['nivel'], $vaga['localizacao'], $pessoa['localizacao']);
-        $stmt = $mysqli->prepare('INSERT INTO candidaturas (id, id_vaga, id_pessoa, score) VALUES (?, ?, ?, ?)');
-        $stmt->bind_param('sssi', $id, $id_vaga, $id_pessoa, $score);
-        if ($stmt->execute()) {
+        $res = $candidaturaModel->inserir($id, $id_vaga, $id_pessoa, $score);
+        if ($res) {
             http_response_code(201);
             header('Content-Type: application/json');
             echo json_encode([
@@ -68,10 +46,9 @@ class CandidaturaController {
                 'score' => $score
             ]);
         } else {
-            http_response_code(400);
+            http_response_code(422);
         }
-        $stmt->close();
-        $mysqli->close();
+        $candidaturaModel->fechar();
     }
     private function generateUUID() {
         return sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',

@@ -1,5 +1,6 @@
 <?php
 require_once '../config/database.php';
+require_once __DIR__ . '/../Models/VagaModel.php';
 class VagaController {
     public function create() {
         // Limpa qualquer saída antes de enviar headers
@@ -30,28 +31,16 @@ class VagaController {
         }
         // Gera UUID se não vier id
         $id = !empty($data['id']) ? $data['id'] : $this->generateUUID();
+        $vagaModel = new VagaModel();
         // Verificar unicidade do id
-        $dbConfig = require '../config/database.php';
-        $mysqli = new mysqli($dbConfig['host'], $dbConfig['user'], $dbConfig['pass'], $dbConfig['dbname'], $dbConfig['port']);
-        if ($mysqli->connect_errno) {
-            http_response_code(500);
-            return;
-        }
-        $check = $mysqli->prepare('SELECT id FROM vagas WHERE id = ?');
-        $check->bind_param('s', $id);
-        $check->execute();
-        $check->store_result();
-        if ($check->num_rows > 0) {
+        if ($vagaModel->existeId($id)) {
             http_response_code(422);
-            $check->close();
-            $mysqli->close();
+            $vagaModel->fechar();
             return;
         }
-        $check->close();
-        $stmt = $mysqli->prepare('INSERT INTO vagas (id, empresa, titulo, descricao, localizacao, nivel) VALUES (?, ?, ?, ?, ?, ?)');
         $descricao = isset($data['descricao']) ? $data['descricao'] : null;
-        $stmt->bind_param('sssssi', $id, $data['empresa'], $data['titulo'], $descricao, $data['localizacao'], $data['nivel']);
-        if ($stmt->execute()) {
+        $res = $vagaModel->inserir($id, $data['empresa'], $data['titulo'], $descricao, $data['localizacao'], $data['nivel']);
+        if ($res) {
             http_response_code(201); // Created
             header('Content-Type: application/json');
             echo json_encode([
@@ -61,8 +50,7 @@ class VagaController {
         } else {
             http_response_code(422);
         }
-        $stmt->close();
-        $mysqli->close();
+        $vagaModel->fechar();
     }
     private function generateUUID() {
         return sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',

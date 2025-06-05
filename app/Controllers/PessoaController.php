@@ -1,5 +1,6 @@
 <?php
 require_once '../config/database.php';
+require_once __DIR__ . '/../Models/PessoaModel.php';
 class PessoaController {
     public function create() {
         if (ob_get_level()) ob_clean();
@@ -28,26 +29,14 @@ class PessoaController {
         }
         // Gera UUID se não vier id
         $id = !empty($data['id']) ? $data['id'] : $this->generateUUID();
-        $dbConfig = require '../config/database.php';
-        $mysqli = new mysqli($dbConfig['host'], $dbConfig['user'], $dbConfig['pass'], $dbConfig['dbname'], $dbConfig['port']);
-        if ($mysqli->connect_errno) {
-            http_response_code(500);
-            return;
-        }
-        $check = $mysqli->prepare('SELECT id FROM pessoa WHERE id = ?');
-        $check->bind_param('s', $id);
-        $check->execute();
-        $check->store_result();
-        if ($check->num_rows > 0) {
+        $pessoaModel = new PessoaModel();
+        if ($pessoaModel->existeId($id)) {
             http_response_code(422);
-            $check->close();
-            $mysqli->close();
+            $pessoaModel->fechar();
             return;
         }
-        $check->close();
-        $stmt = $mysqli->prepare('INSERT INTO pessoa (id, nome, profissao, localizacao, nivel) VALUES (?, ?, ?, ?, ?)');
-        $stmt->bind_param('sssss', $id, $data['nome'], $data['profissao'], $data['localizacao'], $data['nivel']);
-        if ($stmt->execute()) {
+        $res = $pessoaModel->inserir($id, $data['nome'], $data['profissao'], $data['localizacao'], $data['nivel']);
+        if ($res) {
             http_response_code(201);
             header('Content-Type: application/json');
             echo json_encode([
@@ -57,8 +46,7 @@ class PessoaController {
         } else {
             http_response_code(422);
         }
-        $stmt->close();
-        $mysqli->close();
+        $pessoaModel->fechar();
     }
     private function generateUUID() {
         return sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
