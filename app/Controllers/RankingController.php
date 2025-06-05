@@ -1,5 +1,4 @@
 <?php
-require_once '../config/database.php';
 require_once __DIR__ . '/../Models/RankingModel.php';
 class RankingController {
     public function rankingPorVaga($idVaga) {

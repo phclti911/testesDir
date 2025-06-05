@@ -3,23 +3,20 @@ require_once '../config/database.php';
 require_once __DIR__ . '/../Models/VagaModel.php';
 class VagaController {
     public function create() {
-        // Limpa qualquer saída antes de enviar headers
         if (ob_get_level()) ob_clean();
         $input = file_get_contents('php://input');
         $data = json_decode($input, true);
         if ($data === null) {
-            http_response_code(400); // JSON inválido
+            http_response_code(400);
             return;
         }
-        // Validação dos campos obrigatórios (id agora opcional)
         $camposObrigatorios = ['empresa', 'titulo', 'localizacao', 'nivel'];
         foreach ($camposObrigatorios as $campo) {
             if (empty($data[$campo])) {
-                http_response_code(422); // Unprocessable Entity
+                http_response_code(422);
                 return;
             }
         }
-        // Validação de localizacao e nivel (apenas letras A-F e nível numérico >= 1)
         $localizacoesValidas = ['A', 'B', 'C', 'D', 'E', 'F'];
         if (!in_array($data['localizacao'], $localizacoesValidas, true)) {
             http_response_code(422);
@@ -29,10 +26,8 @@ class VagaController {
             http_response_code(422);
             return;
         }
-        // Gera UUID se não vier id
         $id = !empty($data['id']) ? $data['id'] : $this->generateUUID();
         $vagaModel = new VagaModel();
-        // Verificar unicidade do id
         if ($vagaModel->existeId($id)) {
             http_response_code(422);
             $vagaModel->fechar();
@@ -41,7 +36,7 @@ class VagaController {
         $descricao = isset($data['descricao']) ? $data['descricao'] : null;
         $res = $vagaModel->inserir($id, $data['empresa'], $data['titulo'], $descricao, $data['localizacao'], $data['nivel']);
         if ($res) {
-            http_response_code(201); // Created
+            http_response_code(201);
             header('Content-Type: application/json');
             echo json_encode([
                 'mensagem' => 'Vaga cadastrada com sucesso. Consulte o banco para validar o registro.',

@@ -1,5 +1,4 @@
 <?php
-// app/Models/CandidaturaModel.php
 require_once __DIR__ . '/../../config/database.php';
 class CandidaturaModel {
     private $mysqli;

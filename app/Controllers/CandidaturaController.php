@@ -7,7 +7,7 @@ class CandidaturaController {
         $input = file_get_contents('php://input');
         $data = json_decode($input, true);
         if ($data === null) {
-            http_response_code(400); // JSON inválido
+            http_response_code(400);
             return;
         }
         if (empty($data['id_vaga']) || empty($data['id_pessoa'])) {
@@ -60,14 +60,12 @@ class CandidaturaController {
         );
     }
     private function calcularScore($nivelVaga, $nivelPessoa, $localVaga, $localPessoa) {
-        // N = 100 - 25 * (NV - NC)
         $N = 100 - 25 * ((int)$nivelVaga - (int)$nivelPessoa);
         $D = $this->calcularDistancia($localVaga, $localPessoa);
         $score = $N + $D / 2;
         return (int)round($score);
     }
     private function calcularDistancia($origem, $destino) {
-        // Grafo das distâncias
         $mapa = [
             'A' => ['B' => 5],
             'B' => ['A' => 5, 'C' => 7, 'D' => 3],
@@ -76,7 +74,6 @@ class CandidaturaController {
             'E' => ['C' => 4, 'D' => 10],
             'F' => ['D' => 8],
         ];
-        // Dijkstra
         $dist = [];
         $visitados = [];
         foreach ($mapa as $k => $v) $dist[$k] = INF;
